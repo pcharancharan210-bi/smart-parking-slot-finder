@@ -890,22 +890,6 @@ body {
   cursor: pointer;
 }
 
-.btn-duplicate-action {
-  background: #FEF3C7;
-  border: 1px solid #FCD34D;
-  color: #B45309;
-  font-family: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 5px 12px;
-  border-radius: var(--radius-pill);
-  cursor: pointer;
-  transition: var(--transition);
-}
-.btn-duplicate-action:hover {
-  background: #FDE68A;
-  transform: translateY(-1px);
-}
 
 .locate-inline-btn {
   position: absolute;
@@ -926,23 +910,6 @@ body {
   background: var(--accent-blue-light);
 }
 
-.btn-sidebar-generate {
-  background: #FEF3C7;
-  border: 1.5px dashed #D97706;
-  color: #92400E;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 700;
-  padding: 8px 12px;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  width: 100%;
-  margin-bottom: 14px;
-  transition: var(--transition);
-}
-.btn-sidebar-generate:hover {
-  background: #FDE68A;
-}
 
 .btn-notif-circle {
   width: 44px;

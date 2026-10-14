@@ -507,43 +507,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Generate Duplicate Spots Button (Home Dashboard)
-  const btnGenerateDuplicates = document.getElementById('btn-generate-duplicates');
-  if (btnGenerateDuplicates) {
-    btnGenerateDuplicates.addEventListener('click', async () => {
-      const coords = window.parkingDataService.getUserLocation();
-      const duplicates = window.parkingDataService.generateNearbyDuplicateParking(coords.lat, coords.lng, coords.areaName, 4);
-      const existing = await window.parkingDataService.getLocations();
-      const combined = [...duplicates, ...existing];
-      localStorage.setItem(window.parkingDataService.storageKeyLocations, JSON.stringify(combined));
-
-      showToast(`✨ Generated 4 duplicate parking areas with available slots near ${coords.areaName}!`);
-      renderHomeScreen();
-      if (state.currentPage === 'map') initOrRefreshMap();
-    });
-  }
-
-  // Generate Duplicate Spots Button (Map Sidebar)
-  const btnMapGenerateSpots = document.getElementById('btn-map-generate-spots');
-  if (btnMapGenerateSpots) {
-    btnMapGenerateSpots.addEventListener('click', async () => {
-      let centerLat = 12.3088, centerLng = 76.6521;
-      if (state.mapInstance) {
-        const center = state.mapInstance.getCenter();
-        centerLat = center.lat;
-        centerLng = center.lng;
-      }
-      const coords = window.parkingDataService.getUserLocation();
-      const duplicates = window.parkingDataService.generateNearbyDuplicateParking(centerLat, centerLng, coords.areaName || "Area", 4);
-      const existing = await window.parkingDataService.getLocations();
-      const combined = [...duplicates, ...existing];
-      localStorage.setItem(window.parkingDataService.storageKeyLocations, JSON.stringify(combined));
-
-      showToast('✨ Generated 4 duplicate parking areas around current map view!');
-      initOrRefreshMap();
-      renderHomeScreen();
-    });
-  }
 
   // ================= PAGE 4: HOME DASHBOARD FLOW ================= //
   async function renderHomeScreen() {

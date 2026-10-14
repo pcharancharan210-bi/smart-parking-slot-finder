@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Parking Slot Finder - Web App</title>
+  <meta name="description" content="Find, Book, Park, and Move Smart. Modern responsive web application with real-time Firebase slot reservation.">
+
+  <!-- Leaflet CSS for interactive map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+  <!-- Google Fonts: Plus Jakarta Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Main Web App Styles -->
+  <link rel="stylesheet" href="style.css?v=5.0">
+
+  <!-- Firebase v10 Compat SDK (Runs in any browser without bundlers) -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+  <!-- ================= TOP RESPONSIVE WEB NAVBAR ================= -->
+  <header class="web-navbar" id="web-navbar">
+    <div class="nav-container">
+      <!-- Brand Logo -->
+      <a class="nav-brand" id="brand-logo" href="javascript:void(0);">
+        <div class="brand-icon-box">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.2">
+            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"></path>
+            <circle cx="12" cy="9" r="2.5"></circle>
+          </svg>
+        </div>
+        <div class="brand-text-wrap">
+          <span class="brand-name">Smart Parking</span>
+          <span class="brand-tag">SLOT FINDER</span>
+        </div>
+      </a>
+
+      <!-- Desktop Navigation Links (Visible when active) -->
+      <nav class="nav-links" id="main-nav-links">
+        <button class="nav-link-btn active" data-page="home">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-link-btn" data-page="map">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon><line x1="8" y1="2" x2="8" y2="18"></line><line x1="16" y1="6" x2="16" y2="22"></line></svg>
+          <span>Find Parking</span>
+        </button>
+        <button class="nav-link-btn" data-page="bookings">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+          <span>My Bookings</span>
+        </button>
+        <button class="nav-link-btn" data-page="profile">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          <span>Profile</span>
+        </button>
+      </nav>
+
+      <!-- Right Side Actions -->
+      <div class="nav-right-actions">
+        <!-- Firebase Status Badge -->
+        <button class="firebase-status-chip" id="firebase-status-chip" title="Click to configure Firebase">
+          <span class="status-pulse-dot"></span>
+          <span class="status-chip-text">Firebase Active</span>
+        </button>
+
+        <!-- User Profile Quick Chip -->
+        <div class="user-chip-btn" id="user-chip-btn" style="display: none;">
+          <div class="user-avatar-mini">AM</div>
+          <span class="user-chip-name">Aarav Mehta</span>
+        </div>
+
+        <!-- Mobile Hamburger Button -->
+        <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Toggle Navigation">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= MAIN WEB APP CONTENT ================= -->
+  <main class="web-main-container">
+
+    <!-- ================= PAGE 1: SPLASH & LANDING (INITIAL PAGE) ================= -->
+    <section class="web-page active" id="page-splash">
+      <div class="landing-hero-grid">
+        <!-- Left: Copy & CTA -->
+        <div class="landing-text-col">
+          <div class="landing-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+            <span>UNIVERSAL SMART PARKING SYSTEM</span>
+          </div>
+          <h1 class="landing-hero-title">
+            Smart Parking<br><span class="text-gradient">For All Vehicles</span>
+          </h1>
+
+          <!-- Vehicle Categories Indicator -->
+          <div class="landing-vehicle-badge-row">
+            <div class="vbadge-pill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14v-5l-2-6H7L5 12v5z"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle></svg>
+              <span>Cars & Sedans</span>
+            </div>
+            <div class="vbadge-pill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="18.5" cy="17.5" r="3.5"></circle><path d="M15 6h-3l-3 6.5h6.5l2-6.5z"></path></svg>
+              <span>Bikes & Scooters</span>
+            </div>
+            <div class="vbadge-pill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+              <span>SUVs & Trucks</span>
+            </div>
+            <div class="vbadge-pill">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+              <span>All Vehicles Welcome</span>
+            </div>
+          </div>
+
+          <div class="landing-cta-row">
+            <button class="btn-primary-web btn-lg" id="btn-get-started">
+              <span>Find Parking Now</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+            <button class="btn-secondary-web btn-lg" id="btn-quick-login">
+              <span>Login to Account</span>
+            </button>
+            <button class="btn-admin-pill btn-lg" id="btn-quick-admin-login">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+              <span>Admin Login</span>
+            </button>
+          </div>
+
+          <!-- Feature Bullets -->
+          <div class="landing-features-grid">
+            <div class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-text">
+                <strong>All Vehicles Allowed</strong>
+                <span>Dedicated 2W, 4W & Heavy slots</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-text">
+                <strong>Real-Time Slots</strong>
+                <span>Instant occupancy updates</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-text">
+                <strong>Zero Waiting</strong>
+                <span>Guaranteed spot reservation</span>
+              </div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon">✓</div>
+              <div class="feature-text">
+                <strong>Interactive Map</strong>
+                <span>Live GPS route guidance</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Graphic Card -->
+        <div class="landing-graphic-col">
+          <div class="landing-hero-card">
+            <img src="assets/images/hero.jpg" alt="All Vehicles Smart Parking Illustration" class="landing-hero-img">
+            <div class="floating-stat-badge badge-top">
+              <span class="stat-dot green"></span>
+              <span>25+ Multi-Vehicle Slots Nearby</span>
+            </div>
+            <div class="floating-stat-badge badge-bottom">
+              <span class="stat-dot blue"></span>
+              <span>Open for Cars, Bikes, Trucks & EVs</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 2: LOGIN (STEP 2) ================= -->
+    <section class="web-page" id="page-login">
+      <div class="auth-card-wrapper">
+        <div class="auth-card">
+          <button class="back-link-btn" id="btn-login-back-landing">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back to Home</span>
+          </button>
+
+          <div class="auth-header">
+            <h2 class="auth-title">Welcome Back</h2>
+            <p class="auth-subtitle">Login to continue to Smart Parking</p>
+          </div>
+
+          <form id="form-login">
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </span>
+                <input type="email" id="login-email" class="input-field" placeholder="e.g. aarav@example.com" value="aarav@example.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </span>
+                <input type="tel" id="login-phone" class="input-field" placeholder="+91 9876543210" value="+91 9876543210" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </span>
+                <input type="password" id="login-password" class="input-field has-toggle" placeholder="Enter password" value="password123" required>
+                <button type="button" class="btn-pwd-toggle" title="Show/Hide Password">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Confirm Password</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </span>
+                <input type="password" id="login-confirm-password" class="input-field has-toggle" placeholder="Re-enter password to confirm" value="password123" required>
+                <button type="button" class="btn-pwd-toggle" title="Show/Hide Password">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="auth-options-row">
+              <a href="javascript:void(0);" class="forgot-link" id="link-forgot-pwd">Forgot Password?</a>
+            </div>
+
+            <button type="submit" class="btn-primary-web btn-block">Login</button>
+          </form>
+
+          <div class="auth-divider">
+            <span>OR</span>
+          </div>
+
+          <button type="button" class="btn-google-web" id="btn-google-login">
+            <svg class="google-svg" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/>
+              <path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.25v3.15C3.26 21.36 7.34 24 12 24z"/>
+              <path fill="#FBBC05" d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.25C.45 8.18 0 9.99 0 12s.45 3.82 1.25 5.42l4.03-3.15z"/>
+              <path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.34 0 3.26 2.64 1.25 6.58l4.03 3.15c.95-2.83 3.6-4.98 6.72-4.98z"/>
+            </svg>
+            <span>Continue with Google</span>
+          </button>
+
+          <div class="auth-bottom-switch">
+            <span>New here?</span>
+            <button class="text-link-btn" id="link-to-signup">Sign Up</button>
+          </div>
+
+          <div class="admin-access-link-wrap">
+            <span>System Administrator?</span>
+            <button class="text-link-btn" id="link-login-to-admin">Admin Portal Login →</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 2B: ADMIN PORTAL LOGIN ================= -->
+    <section class="web-page" id="page-admin-login">
+      <div class="auth-card-wrapper">
+        <div class="auth-card admin-auth-card">
+          <button class="back-link-btn" id="btn-admin-login-back">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back to Home</span>
+          </button>
+
+          <div class="auth-header">
+            <div class="admin-badge-icon">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+            </div>
+            <h2 class="auth-title">Admin Portal Login</h2>
+            <p class="auth-subtitle">Restricted Access • Authorized System Administrator Only</p>
+          </div>
+
+          <div class="admin-notice-box">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+            <div>
+              <strong>Single Authorized Administrator:</strong> Only the registered email <strong>pcharancharan210@gmail.com</strong> (Admin Phone: <strong>+91 9676826516</strong>) is permitted to access this portal.
+            </div>
+          </div>
+
+          <form id="form-admin-login">
+            <div class="form-group">
+              <label class="form-label">Administrator Email</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </span>
+                <input type="email" id="admin-login-email" class="input-field" placeholder="pcharancharan210@gmail.com" value="pcharancharan210@gmail.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Admin Security Key / Password</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </span>
+                <input type="password" id="admin-login-password" class="input-field has-toggle" placeholder="Enter admin password" value="123456789" required>
+                <button type="button" class="btn-pwd-toggle" title="Show/Hide Password">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- Error message container -->
+            <div id="admin-login-error" class="admin-error-banner" style="display: none;"></div>
+
+            <button type="submit" class="btn-primary-web btn-block btn-admin-submit" style="margin-top: 10px;">
+              <span>Authenticate & Enter Admin Console</span>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            </button>
+          </form>
+
+          <div class="auth-bottom-switch">
+            <span>Standard User?</span>
+            <button class="text-link-btn" id="link-admin-to-user-login">Go to User Login</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 3: SIGN UP (CREATE ACCOUNT) ================= -->
+    <section class="web-page" id="page-signup">
+      <div class="auth-card-wrapper">
+        <div class="auth-card">
+          <button class="back-link-btn" id="btn-signup-back-login">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back to Login</span>
+          </button>
+
+          <div class="auth-header">
+            <h2 class="auth-title">Create Account</h2>
+            <p class="auth-subtitle">Join Smart Parking Slot Finder</p>
+          </div>
+
+          <form id="form-signup">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                </span>
+                <input type="text" id="signup-name" class="input-field" placeholder="e.g. Aarav Mehta" value="Aarav Mehta" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                </span>
+                <input type="tel" id="signup-phone" class="input-field" placeholder="+91 9876543210" value="+91 9876543210" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Email Address</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+                </span>
+                <input type="email" id="signup-email" class="input-field" placeholder="aarav@example.com" value="aarav@example.com" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Password</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </span>
+                <input type="password" id="signup-password" class="input-field has-toggle" placeholder="Create password" value="password123" required>
+                <button type="button" class="btn-pwd-toggle">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Confirm Password</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                </span>
+                <input type="password" id="signup-confirm-password" class="input-field has-toggle" placeholder="Confirm password" value="password123" required>
+                <button type="button" class="btn-pwd-toggle">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary-web btn-block" style="margin-top: 10px;">Sign Up</button>
+          </form>
+
+          <div class="auth-bottom-switch">
+            <span>Already have an account?</span>
+            <button class="text-link-btn" id="link-to-login">Login</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 4: HOME (SMART PARKING DASHBOARD) ================= -->
+    <section class="web-page" id="page-home">
+      <div class="dashboard-layout">
+
+        <!-- Top Greeting & Search Header -->
+        <div class="dash-welcome-row">
+          <div>
+            <h2 class="dash-headline">Find Your Parking Slot</h2>
+            <div class="user-location-status-bar">
+              <span class="location-beacon-dot"></span>
+              <span class="loc-text">Location: <strong id="user-location-name">Mysore Central (Default)</strong></span>
+              <button class="btn-locate-action" id="btn-detect-gps" title="Detect real GPS location">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                <span>Detect GPS</span>
+              </button>
+              <select id="select-test-city" class="city-selector-dropdown" title="Quick switch location">
+                <option value="mysore">📍 Mysore Central</option>
+                <option value="bangalore">📍 Bangalore (MG Road)</option>
+                <option value="mumbai">📍 Mumbai (Bandra)</option>
+                <option value="delhi">📍 Delhi (CP)</option>
+              </select>
+              <button class="btn-duplicate-action" id="btn-generate-duplicates" title="Generate duplicate parking areas around current coordinates">
+                ✨ Generate Duplicate Spots
+              </button>
+            </div>
+          </div>
+          <!-- Notification Bell -->
+          <button class="btn-notif-circle" id="btn-dash-notif" title="Notifications">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            <span class="notif-badge-dot"></span>
+          </button>
+        </div>
+
+        <!-- Global Search Bar -->
+        <div class="web-search-bar">
+          <span class="search-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+          </span>
+          <input type="text" id="web-search-input" class="search-input-field" placeholder="Search location (e.g. City Mall, Metro Station, IT Park, MG Road)...">
+          <button class="locate-inline-btn" id="btn-search-locate" title="Find spots near my GPS location">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
+          </button>
+          <button class="mic-btn" id="btn-voice-search" title="Voice Search">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>
+          </button>
+        </div>
+
+        <!-- Vehicle Type Filter Pills -->
+        <div class="vehicle-filter-container">
+          <span class="filter-label">Vehicle Category:</span>
+          <div class="vehicle-pills-row">
+            <button class="v-pill active" data-vehicle="All">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+              <span>All Vehicles</span>
+            </button>
+            <button class="v-pill" data-vehicle="Car">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14v-5l-2-6H7L5 12v5z"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle></svg>
+              <span>Car</span>
+            </button>
+            <button class="v-pill" data-vehicle="Bike">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="18.5" cy="17.5" r="3.5"></circle><path d="M15 6h-3l-3 6.5h6.5l2-6.5z"></path></svg>
+              <span>Bike</span>
+            </button>
+            <button class="v-pill" data-vehicle="Truck">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+              <span>Truck / SUV</span>
+            </button>
+            <button class="v-pill" data-vehicle="Others">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+              <span>EV & Others</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Promo Banner -->
+        <div class="web-promo-banner">
+          <div class="promo-content">
+            <div class="promo-badge-tag">🚗 🏍️ 🚛 Multi-Vehicle Smart Facility</div>
+            <h3 class="promo-heading">Park Any Vehicle • Save Time & Fuel</h3>
+            <p class="promo-subheading">Dedicated parking bays reserved for Cars, Two-Wheelers, SUVs, and Heavy Vehicles. Skip circling the block with live GPS slots.</p>
+            <button class="btn-promo-action" id="btn-promo-find-map">Open Live Map</button>
+          </div>
+          <div class="promo-image-box">
+            <img src="assets/images/hero.jpg" alt="All Vehicles Smart Parking" class="promo-img">
+          </div>
+        </div>
+
+        <!-- Popular Locations Section Header -->
+        <div class="section-title-row">
+          <div>
+            <h3 class="web-section-heading">Popular Locations</h3>
+            <span class="web-section-sub">Tap any location to view slots, facilities, or book directly</span>
+          </div>
+          <button class="btn-see-all" id="btn-see-all-map">View All on Map →</button>
+        </div>
+
+        <!-- Popular Locations Responsive Grid -->
+        <div class="locations-web-grid" id="popular-locations-grid">
+          <!-- Populated dynamically by app.js from Firebase/localStorage -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 5: FIND PARKING / INTERACTIVE MAP ================= -->
+    <section class="web-page" id="page-map">
+      <div class="map-page-layout">
+        <!-- Back Navigation & Title -->
+        <div class="page-nav-header">
+          <button class="btn-back-link" data-back="home">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back to Dashboard</span>
+          </button>
+          <h2 class="page-title">Find Parking Near You</h2>
+          <div></div>
+        </div>
+
+        <!-- Desktop Split Layout: Sidebar Locations + Interactive Map -->
+        <div class="map-split-view">
+          <!-- Sidebar Spots List -->
+          <div class="map-sidebar">
+            <div class="sidebar-header">
+              <h4 class="sidebar-title">Nearby Parking Slots</h4>
+              <span class="sidebar-count" id="sidebar-slots-count">4 Available</span>
+            </div>
+            <button class="btn-sidebar-generate" id="btn-map-generate-spots" title="Generate duplicate parking areas at current map center">
+              ✨ Auto-Generate Duplicate Spots
+            </button>
+            <div class="sidebar-spots-list" id="map-sidebar-spots-list">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+
+          <!-- Interactive Map Container -->
+          <div class="map-main-wrapper">
+            <div id="leaflet-map-web"></div>
+
+            <!-- GPS Center Button -->
+            <button class="btn-gps-float" id="btn-web-gps" title="Center on My Location">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="2" x2="12" y2="6"></line>
+                <line x1="12" y1="18" x2="12" y2="22"></line>
+                <line x1="2" y1="12" x2="6" y2="12"></line>
+                <line x1="18" y1="12" x2="22" y2="12"></line>
+                <circle cx="12" cy="12" r="3" fill="currentColor"></circle>
+              </svg>
+            </button>
+
+            <!-- Floating Selected Location Card on Map -->
+            <div class="map-selected-card" id="map-selected-card">
+              <!-- Populated dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 6: PARKING DETAILS ================= -->
+    <section class="web-page" id="page-details">
+      <div class="details-page-layout">
+        <!-- Top Back Nav -->
+        <div class="page-nav-header">
+          <button class="btn-back-link" data-back="home">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back</span>
+          </button>
+          <h2 class="page-title">Parking Details</h2>
+          <button class="icon-bookmark-btn" onclick="showToast('Bookmark saved to your account!')" title="Save Location">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          </button>
+        </div>
+
+        <!-- Details Card Grid -->
+        <div class="details-card-container">
+          <!-- Hero Photo -->
+          <div class="details-hero-box">
+            <img src="assets/images/city_mall.jpg" alt="Parking Hero" id="web-details-img" class="details-main-img">
+            <div class="hero-image-overlay">
+              <span class="live-status-pill">● Live Vacancy Available</span>
+            </div>
+          </div>
+
+          <!-- Info Body -->
+          <div class="details-body">
+            <div class="details-heading-row">
+              <div>
+                <h2 class="details-name" id="web-details-name">City Mall Parking</h2>
+                <div class="details-address-line">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <span id="web-details-address">MG Road, Mysore</span>
+                </div>
+              </div>
+              <div class="details-rating-badge" id="web-details-rating">
+                ★ 4.5 <span>(120 reviews)</span>
+              </div>
+            </div>
+
+            <!-- Stats Boxes -->
+            <div class="details-stats-row">
+              <div class="stat-pill-box">
+                <div class="stat-pill-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                </div>
+                <div>
+                  <span class="stat-pill-label">Available Slots</span>
+                  <strong class="stat-pill-val" id="web-details-slots">25 / 50</strong>
+                </div>
+              </div>
+
+              <div class="stat-pill-box">
+                <div class="stat-pill-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                </div>
+                <div>
+                  <span class="stat-pill-label">Hourly Price</span>
+                  <strong class="stat-pill-val" id="web-details-price">₹20 / hour</strong>
+                </div>
+              </div>
+
+              <div class="stat-pill-box">
+                <div class="stat-pill-icon">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </div>
+                <div>
+                  <span class="stat-pill-label">Operating Hours</span>
+                  <strong class="stat-pill-val" id="web-details-hours">6:00 AM – 11:00 PM</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Supported Vehicle Types Pill Row -->
+            <div class="details-vehicle-support-box">
+              <span class="support-box-label">Compatible Vehicles Accepted:</span>
+              <div class="support-pills-list">
+                <span class="support-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14v-5l-2-6H7L5 12v5z"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle></svg>
+                  Cars & Sedans
+                </span>
+                <span class="support-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5.5" cy="17.5" r="3.5"></circle><circle cx="18.5" cy="17.5" r="3.5"></circle><path d="M15 6h-3l-3 6.5h6.5l2-6.5z"></path></svg>
+                  Bikes & Scooters
+                </span>
+                <span class="support-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+                  SUVs & Trucks
+                </span>
+                <span class="support-pill">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"></path><path d="M2 12h20"></path></svg>
+                  Commercial & EVs
+                </span>
+              </div>
+            </div>
+
+            <!-- Facilities Grid -->
+            <div class="facilities-wrap">
+              <h4 class="facilities-heading">Available Facilities & Amenities</h4>
+              <div class="facilities-web-grid">
+                <div class="fac-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 17V7h4a3 3 0 0 1 0 6H9"></path></svg>
+                  <span>All-Vehicle Bays</span>
+                </div>
+                <div class="fac-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 7l-7 5 7 5V7z"></path><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                  <span>CCTV 24x7</span>
+                </div>
+                <div class="fac-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                  <span>Guarded Security</span>
+                </div>
+                <div class="fac-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path></svg>
+                  <span>EV Charging</span>
+                </div>
+                <div class="fac-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                  <span>Restroom / Washroom</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CTA Action -->
+            <button class="btn-primary-web btn-lg btn-block" id="btn-web-book-slot">
+              <span>Book Slot Now</span>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 7: BOOK PARKING SLOT (RESERVATION STEP) ================= -->
+    <section class="web-page" id="page-book">
+      <div class="book-page-layout">
+        <!-- Top Back Nav -->
+        <div class="page-nav-header">
+          <button class="btn-back-link" data-back="details">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back to Details</span>
+          </button>
+          <h2 class="page-title">Book Parking Slot</h2>
+          <div></div>
+        </div>
+
+        <div class="booking-form-card">
+          <div class="booking-loc-header">
+            <div>
+              <span class="booking-loc-label">Reserving slot at:</span>
+              <h3 class="booking-loc-name" id="book-form-loc-name">City Mall Parking</h3>
+            </div>
+            <div class="booking-rate-badge" id="book-form-rate-badge">₹20 / hr</div>
+          </div>
+
+          <form id="form-web-book-slot" onsubmit="event.preventDefault();">
+            <!-- Row: Vehicle Type & Vehicle Number -->
+            <div class="form-row-2col">
+              <div class="form-group">
+                <label class="form-label">Vehicle Type</label>
+                <div class="input-with-icon">
+                  <span class="icon-left">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14v-5l-2-6H7L5 12v5z"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle></svg>
+                  </span>
+                  <select id="web-book-vehicle-type" class="select-field">
+                    <option value="Car">Car (Sedan / Hatchback / SUV)</option>
+                    <option value="Bike">Bike / Two-Wheeler / Scooter</option>
+                    <option value="Truck">Commercial Truck / Van</option>
+                    <option value="Others">Electric Vehicle (EV) / Others</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Vehicle Registration Number</label>
+                <div class="input-with-icon">
+                  <span class="icon-left">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="12" x2="18" y2="12"></line></svg>
+                  </span>
+                  <input type="text" id="web-book-vehicle-num" class="input-field" placeholder="KA 01 AB 1234" value="KA 01 AB 1234" required>
+                </div>
+              </div>
+            </div>
+
+            <!-- Row: Contact Number & Date -->
+            <div class="form-row-2col">
+              <div class="form-group">
+                <label class="form-label">Contact Phone Number</label>
+                <div class="input-with-icon">
+                  <span class="icon-left">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  </span>
+                  <input type="tel" id="web-book-contact" class="input-field" placeholder="9876543210" value="9876543210" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Booking Date</label>
+                <div class="input-with-icon">
+                  <span class="icon-left">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                  </span>
+                  <input type="text" id="web-book-date" class="input-field" value="11 Sep 2026">
+                </div>
+              </div>
+            </div>
+
+            <!-- Duration Selection -->
+            <div class="form-group">
+              <label class="form-label">Parking Duration</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </span>
+                <select id="web-book-duration" class="select-field">
+                  <option value="1">1 Hour</option>
+                  <option value="2" selected>2 Hours</option>
+                  <option value="3">3 Hours</option>
+                  <option value="4">4 Hours</option>
+                  <option value="6">6 Hours</option>
+                  <option value="8">8 Hours</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Total Amount Calculation Box -->
+            <div class="calculation-summary-box">
+              <div class="calc-label-wrap">
+                <span class="calc-title">Total Amount Payable</span>
+                <span class="calc-sub" id="calc-formula">₹20 / hr × 2 Hours</span>
+              </div>
+              <div class="calc-amount-val" id="web-book-total-amount">₹40</div>
+            </div>
+
+            <!-- Payment Method Selection on Booking Checkout -->
+            <div class="form-group" style="margin-top: 16px;">
+              <label class="form-label">Payment Method</label>
+              <div class="input-with-icon">
+                <span class="icon-left">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                </span>
+                <select id="web-book-payment-method" class="select-field">
+                  <option value="UPI / QR Code" selected>📱 QR Code / UPI (Google Pay, PhonePe, Paytm, QR)</option>
+                  <option value="Payment at Parking">💵 Payment at Parking (Cash / FASTag on Arrival)</option>
+                </select>
+              </div>
+            </div>
+
+            <button type="button" class="btn-primary-web btn-lg btn-block" id="btn-web-confirm-booking">
+              Confirm & Reserve Slot
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 8: BOOKING CONFIRMED (TICKET RECEIPT - LAPTOP DASHBOARD) ================= -->
+    <section class="web-page" id="page-confirmed">
+      <div class="confirmed-page-layout">
+        <!-- Top Success Celebration Banner -->
+        <div class="confirmed-header-banner">
+          <div class="confirmed-check-circle">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="confirmed-header-text">
+            <h2 class="confirmed-heading">Booking Confirmed & Slot Reserved!</h2>
+            <p class="confirmed-subtext">Your parking slot is securely registered in Firebase. Complete your payment below or present your pass at the gate.</p>
+          </div>
+        </div>
+
+        <!-- Laptop 2-Column Responsive Dashboard Grid -->
+        <div class="confirmed-desktop-grid">
+          <!-- Left Column: Parking Boarding Pass & Management Actions -->
+          <div class="confirmed-col-ticket">
+            <!-- Boarding Pass / Parking Ticket -->
+            <div class="parking-ticket-web">
+              <div class="ticket-header">
+                <div class="ticket-brand">
+                  <span style="font-size: 1.15rem;">🚗</span>
+                  <span>SMART PARKING PASS</span>
+                </div>
+                <div class="ticket-status-pill">RESERVED</div>
+              </div>
+
+              <div class="ticket-body">
+                <div class="ticket-field">
+                  <span class="tf-label">Booking ID</span>
+                  <strong class="tf-val ticket-code" id="ticket-booking-id">#SPF123456</strong>
+                </div>
+                <div class="ticket-field">
+                  <span class="tf-label">Facility Location</span>
+                  <strong class="tf-val" id="ticket-location">City Mall Parking</strong>
+                </div>
+                <div class="ticket-field">
+                  <span class="tf-label">Vehicle Plate</span>
+                  <strong class="tf-val" id="ticket-vehicle">KA 01 AB 1234</strong>
+                </div>
+                <div class="ticket-field">
+                  <span class="tf-label">Date & Time</span>
+                  <strong class="tf-val" id="ticket-datetime">11 Sep 2026, 10:00 AM</strong>
+                </div>
+                <div class="ticket-field">
+                  <span class="tf-label">Duration</span>
+                  <strong class="tf-val" id="ticket-duration">2 Hours</strong>
+                </div>
+                <div class="ticket-field highlight">
+                  <span class="tf-label">Amount Payable / Paid</span>
+                  <strong class="tf-val text-green" id="ticket-amount">₹40</strong>
+                </div>
+                <div class="ticket-field">
+                  <span class="tf-label">Payment Method</span>
+                  <strong class="tf-val" id="ticket-payment-method">UPI / QR Code</strong>
+                </div>
+                <div class="ticket-field">
+                  <span class="tf-label">Payment Status</span>
+                  <span class="badge-status-pill success" id="ticket-payment-status">PAID (CONFIRMED)</span>
+                </div>
+                <div class="ticket-field" id="ticket-field-utr" style="display: none;">
+                  <span class="tf-label">UPI Ref / UTR No.</span>
+                  <strong class="tf-val" id="ticket-utr">--</strong>
+                </div>
+                <div class="ticket-field" id="ticket-field-proof" style="display: none;">
+                  <span class="tf-label">Payment Screenshot</span>
+                  <span class="badge-status-pill success" id="ticket-proof-badge" style="cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                    <span>View Proof 📄</span>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Ticket Bottom Note -->
+              <div class="ticket-footer-note">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                <span>Show this digital pass at the parking barrier scanner upon arrival.</span>
+              </div>
+            </div>
+
+            <!-- Ticket Actions Card -->
+            <div class="ticket-actions-card">
+              <button class="btn-primary-web btn-block" id="btn-web-view-booking" style="justify-content: center;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+                <span>View My Reservations</span>
+              </button>
+              <button class="btn-secondary-web btn-block" id="btn-web-go-home" style="justify-content: center;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                <span>Back to Dashboard</span>
+              </button>
+              <button type="button" class="btn-secondary-web btn-block" onclick="window.print()" style="justify-content: center; background:#F8FAFC; border-color:#CBD5E1;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                <span>Print Parking Receipt</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Column: Payment Gateway & Interactive UPI Merchant Standee -->
+          <div class="confirmed-col-payment">
+            <!-- PAYMENT METHODS SECTION -->
+            <div class="confirmed-payment-section" id="confirmed-payment-section">
+              <div class="payment-section-header">
+                <div class="payment-header-text">
+                  <div class="payment-title-row">
+                    <span class="payment-shield-icon">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                    </span>
+                    <h3 class="payment-section-title">Payment Gateway</h3>
+                  </div>
+                  <p class="payment-section-sub">Select or update your preferred payment method</p>
+                </div>
+                <div class="payment-amount-tag">
+                  <span class="pat-label">Fee Payable:</span>
+                  <strong class="pat-val" id="confirmed-pay-amount">₹40</strong>
+                </div>
+              </div>
+
+              <!-- Payment Method Selectable Cards -->
+              <div class="payment-methods-grid">
+                <!-- Method 1: QR Code / UPI -->
+                <div class="payment-method-card active" data-method="upi">
+                  <div class="pm-radio-dot"></div>
+                  <div class="pm-icon-wrap" style="background: rgba(18, 116, 71, 0.1); color: #127447;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  </div>
+                  <div class="pm-info">
+                    <div class="pm-title-row">
+                      <strong class="pm-name">UPI / QR Code</strong>
+                      <span class="pm-fast-badge">Instant</span>
+                    </div>
+                    <span class="pm-sub">Scan QR • GPay, PhonePe, Paytm</span>
+                  </div>
+                </div>
+
+                <!-- Method 2: Payment at Parking -->
+                <div class="payment-method-card" data-method="gate">
+                  <div class="pm-radio-dot"></div>
+                  <div class="pm-icon-wrap" style="background: rgba(100, 116, 139, 0.1); color: #475569;">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 14 14"></polyline></svg>
+                  </div>
+                  <div class="pm-info">
+                    <div class="pm-title-row">
+                      <strong class="pm-name">Payment at Parking</strong>
+                      <span class="pm-offline-badge">On Arrival</span>
+                    </div>
+                    <span class="pm-sub">Cash, FASTag or Booth</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Dynamic Method Panel Container (Holds UPI Standee / Card Form) -->
+              <div id="payment-dynamic-view" class="payment-dynamic-view"></div>
+
+              <!-- Pay Now / Confirm Button -->
+              <button type="button" class="btn-primary-web btn-lg btn-block" id="btn-process-payment-now">
+                <span id="btn-pay-text">Confirm Payment • ₹40</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"></polyline></svg>
+              </button>
+
+              <!-- Success Banner -->
+              <div id="payment-success-banner" class="payment-success-banner" style="display: none;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                <div>
+                  <strong id="psb-title" style="color: #065F46; font-size: 0.95rem;">Payment Confirmed & Verified!</strong>
+                  <p id="psb-sub" style="margin: 2px 0 0; font-size: 0.85rem; color: #047857;">Transaction ID: TXN_9823145 • E-Receipt updated</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 9: MY BOOKINGS (MANAGEMENT) ================= -->
+    <section class="web-page" id="page-bookings">
+      <div class="bookings-page-layout">
+        <div class="page-nav-header">
+          <button class="btn-back-link" data-back="home">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back to Dashboard</span>
+          </button>
+          <h2 class="page-title">My Bookings</h2>
+          <div></div>
+        </div>
+
+        <!-- Segmented Tabs: Upcoming vs History -->
+        <div class="web-segmented-tabs">
+          <button class="tab-pill-btn active" id="web-tab-upcoming">Upcoming Reservations</button>
+          <button class="tab-pill-btn" id="web-tab-history">Booking History</button>
+        </div>
+
+        <!-- Bookings Container -->
+        <div class="bookings-cards-grid" id="web-bookings-list">
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 10: PROFILE & SETTINGS ================= -->
+    <section class="web-page" id="page-profile">
+      <div class="profile-page-layout">
+        <div class="page-nav-header">
+          <button class="btn-back-link" data-back="home">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <span>Back to Dashboard</span>
+          </button>
+          <h2 class="page-title">My Profile & Settings</h2>
+          <div></div>
+        </div>
+
+        <div class="profile-card-wrapper">
+          <!-- User Banner Card -->
+          <div class="profile-user-header-card">
+            <div class="profile-user-avatar">
+              <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+            </div>
+            <div class="profile-user-details">
+              <h3 class="profile-name" id="web-profile-name">Aarav Mehta</h3>
+              <div class="profile-contact" id="web-profile-phone">+91 9876543210</div>
+              <div class="profile-email" id="web-profile-email">aarav@example.com</div>
+            </div>
+          </div>
+
+          <!-- Profile Navigation Menu -->
+          <div class="profile-menu-container">
+            <div class="profile-menu-entry" id="web-menu-vehicles">
+              <div class="entry-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 17h14v-5l-2-6H7L5 12v5z"></path><circle cx="7.5" cy="17.5" r="2.5"></circle><circle cx="16.5" cy="17.5" r="2.5"></circle></svg>
+                <span>My Registered Vehicles</span>
+              </div>
+              <span class="entry-chevron">›</span>
+            </div>
+
+            <div class="profile-menu-entry" onclick="alert('Payment Methods:\n• UPI: aarav@oksbi\n• Card: Visa ending in 4242\n• Fastag: Active')">
+              <div class="entry-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
+                <span>Payment Methods</span>
+              </div>
+              <span class="entry-chevron">›</span>
+            </div>
+
+            <div class="profile-menu-entry" onclick="alert('Notifications are active for slot reservations, expiration alerts, and exclusive discounts.')">
+              <div class="entry-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                <span>Notification Preferences</span>
+              </div>
+              <span class="entry-chevron">›</span>
+            </div>
+
+            <div class="profile-menu-entry" onclick="alert('Smart Parking Help Center:\n24/7 Helpline: 1800-PARK-NOW\nsupport@smartparking.io')">
+              <div class="entry-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <span>Help & Support</span>
+              </div>
+              <span class="entry-chevron">›</span>
+            </div>
+
+            <div class="profile-menu-entry" id="web-menu-settings">
+              <div class="entry-left">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                <span>Database Settings & Cloud Sync</span>
+              </div>
+              <span class="entry-chevron">›</span>
+            </div>
+          </div>
+
+          <!-- Logout Button -->
+          <button class="btn-danger-web" id="btn-web-logout">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span>Logout</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= PAGE 11: ADMIN DASHBOARD (SYSTEM CONTROL) ================= -->
+    <section class="web-page" id="page-admin-dashboard">
+      <div class="admin-dashboard-layout">
+        <!-- Top Admin Header -->
+        <div class="admin-header-row">
+          <div>
+            <div class="admin-top-badge">
+              <span class="status-pulse-dot" style="background:#10B981;"></span>
+              <span>ADMINISTRATOR CONSOLE</span>
+            </div>
+            <h2 class="admin-dashboard-title">Smart Parking System Control Center</h2>
+            <p class="admin-dashboard-sub">Authorized Administrator: <strong style="color:#0F172A;">pcharancharan210@gmail.com</strong> • Phone: <strong style="color:#0F172A;">+91 9676826516</strong> • Full Master Control</p>
+          </div>
+          <div class="admin-header-actions">
+            <button class="btn-secondary-web" id="btn-admin-view-user-app" title="Preview User View">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+              <span>View User Dashboard</span>
+            </button>
+            <button class="btn-danger-web" id="btn-admin-logout" title="Exit Admin Portal">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+              <span>Logout Admin</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin KPI Metric Cards -->
+        <div class="admin-kpi-grid">
+          <div class="admin-kpi-card">
+            <div class="kpi-icon-box" style="background: rgba(18, 116, 71, 0.1); color: #127447;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 17V7h4a3 3 0 0 1 0 6H9"></path></svg>
+            </div>
+            <div>
+              <span class="kpi-label">Active Parking Hubs</span>
+              <strong class="kpi-val" id="admin-stat-hubs">4</strong>
+            </div>
+          </div>
+          <div class="admin-kpi-card">
+            <div class="kpi-icon-box" style="background: rgba(37, 99, 235, 0.1); color: #2563EB;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"></rect><line x1="6" y1="12" x2="18" y2="12"></line></svg>
+            </div>
+            <div>
+              <span class="kpi-label">Available Slots / Total</span>
+              <strong class="kpi-val" id="admin-stat-available">47 / 140</strong>
+            </div>
+          </div>
+          <div class="admin-kpi-card">
+            <div class="kpi-icon-box" style="background: rgba(217, 119, 6, 0.1); color: #D97706;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line></svg>
+            </div>
+            <div>
+              <span class="kpi-label">Live User Bookings</span>
+              <strong class="kpi-val" id="admin-stat-bookings">1</strong>
+            </div>
+          </div>
+          <div class="admin-kpi-card">
+            <div class="kpi-icon-box" style="background: rgba(16, 185, 129, 0.1); color: #059669;">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+            </div>
+            <div>
+              <span class="kpi-label">Total Booking Revenue</span>
+              <strong class="kpi-val" id="admin-stat-revenue">₹85</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Admin Navigation Tabs -->
+        <div class="admin-nav-tabs">
+          <button class="admin-tab-btn active" data-tab="slots">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+            <span>Live Parking Hubs & Slot Control</span>
+          </button>
+          <button class="admin-tab-btn" data-tab="reservations">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>
+            <span>Master User Reservations</span>
+          </button>
+          <button class="admin-tab-btn" data-tab="add-hub">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+            <span>Add New Parking Hub</span>
+          </button>
+          <button class="admin-tab-btn" data-tab="payment-settings" id="tab-btn-payment-settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h3v3h-3z"></path><path d="M17 17h4v4h-4z"></path></svg>
+            <span>Payment & UPI QR Settings</span>
+          </button>
+        </div>
+
+        <!-- Tab 1: Live Slots & Capacity Management -->
+        <div class="admin-tab-content active" id="admin-tab-slots">
+          <div class="admin-card-header-bar">
+            <div>
+              <h3 class="admin-card-heading">Manage Live Parking Slots & Availability</h3>
+              <p class="admin-card-sub">Instant real-time control over vacant slots, hourly rates, and facility status.</p>
+            </div>
+            <button class="btn-secondary-web btn-sm" id="btn-admin-refresh-slots">🔄 Refresh Data</button>
+          </div>
+          <div class="admin-locations-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Facility Name & Address</th>
+                  <th>Hourly Rate</th>
+                  <th>Live Vacancy / Capacity</th>
+                  <th>Vehicle Types</th>
+                  <th>Live Slot Adjuster</th>
+                  <th>Facility Status</th>
+                </tr>
+              </thead>
+              <tbody id="admin-locations-tbody">
+                <!-- Populated dynamically by app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2: Master Reservations -->
+        <div class="admin-tab-content" id="admin-tab-reservations">
+          <div class="admin-card-header-bar">
+            <div>
+              <h3 class="admin-card-heading">All System Bookings & Reservations</h3>
+              <p class="admin-card-sub">Monitor all customer bookings across the city with override cancellation privilege.</p>
+            </div>
+            <button class="btn-secondary-web btn-sm" id="btn-admin-refresh-bookings">🔄 Refresh Bookings</button>
+          </div>
+          <div class="admin-locations-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Booking ID</th>
+                  <th>Facility</th>
+                  <th>Customer Phone</th>
+                  <th>Vehicle Type & Plate</th>
+                  <th>Date & Time</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Admin Action</th>
+                </tr>
+              </thead>
+              <tbody id="admin-bookings-tbody">
+                <!-- Populated dynamically by app.js -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 3: Add New Hub -->
+        <div class="admin-tab-content" id="admin-tab-add-hub">
+          <div class="admin-card-header-bar">
+            <div>
+              <h3 class="admin-card-heading">Register New Parking Facility</h3>
+              <p class="admin-card-sub">Add a new parking location to the city network with custom capacity and rates.</p>
+            </div>
+          </div>
+          <form id="form-admin-add-hub" class="admin-add-hub-form">
+            <div class="form-row-2col">
+              <div class="form-group">
+                <label class="form-label">Facility Name</label>
+                <input type="text" id="new-hub-name" class="input-field" placeholder="e.g. Phoenix Marketcity Parking" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Address / Landmark</label>
+                <input type="text" id="new-hub-address" class="input-field" placeholder="e.g. Whitefield Main Road" required>
+              </div>
+            </div>
+            <div class="form-row-2col">
+              <div class="form-group">
+                <label class="form-label">Total Slot Capacity</label>
+                <input type="number" id="new-hub-total" class="input-field" placeholder="50" value="50" min="5" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Initial Available Slots</label>
+                <input type="number" id="new-hub-available" class="input-field" placeholder="25" value="25" min="0" required>
+              </div>
+            </div>
+            <div class="form-row-2col">
+              <div class="form-group">
+                <label class="form-label">Hourly Rate (₹)</label>
+                <input type="number" id="new-hub-rate" class="input-field" placeholder="20" value="20" min="5" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Operating Hours</label>
+                <input type="text" id="new-hub-hours" class="input-field" placeholder="6:00 AM – 11:00 PM" value="6:00 AM – 11:00 PM">
+              </div>
+            </div>
+            <button type="submit" class="btn-primary-web btn-lg">➕ Register & Launch Parking Hub</button>
+          </form>
+        </div>
+
+        <!-- Tab 4: UPI & Payment QR Configuration (Matching Requested Design) -->
+        <div class="admin-tab-content" id="admin-tab-payment-settings">
+          <!-- Top Breadcrumb & Heading -->
+          <div class="admin-upi-header-wrap">
+            <div class="admin-upi-breadcrumb">
+              <span class="breadcrumb-icon">🏠</span>
+              <span>Admin Portal</span>
+              <span class="breadcrumb-sep">/</span>
+              <span class="breadcrumb-active">Payment Settings</span>
+            </div>
+            <h3 class="admin-upi-main-title">UPI &amp; Fee Collection Settings</h3>
+            <p class="admin-upi-main-sub">
+              Configure facility-specific UPI IDs and merchant payee accounts to enable dynamic payment QR code generation during parking reservations.
+            </p>
+          </div>
+
+          <!-- 4 KPI Metrics Row -->
+          <div class="admin-upi-kpis-grid">
+            <div class="admin-upi-kpi-card">
+              <div class="upi-kpi-icon-box purple">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M3 9h18M9 21V9"></path></svg>
+              </div>
+              <div class="upi-kpi-text-box">
+                <span class="upi-kpi-label">CONFIGURED FACILITIES</span>
+                <strong class="upi-kpi-val" id="admin-upi-kpi-facilities">4</strong>
+                <span class="upi-kpi-sub">Parking hubs registered</span>
+              </div>
+            </div>
+
+            <div class="admin-upi-kpi-card">
+              <div class="upi-kpi-icon-box green">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <div class="upi-kpi-text-box">
+                <span class="upi-kpi-label">UPI ENABLED</span>
+                <strong class="upi-kpi-val" id="admin-upi-kpi-enabled">4</strong>
+                <span class="upi-kpi-sub">Accepting online payments</span>
+              </div>
+            </div>
+
+            <div class="admin-upi-kpi-card">
+              <div class="upi-kpi-icon-box amber">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="10" y1="15" x2="10" y2="9"></line><line x1="14" y1="15" x2="14" y2="9"></line></svg>
+              </div>
+              <div class="upi-kpi-text-box">
+                <span class="upi-kpi-label">PAYMENTS PAUSED</span>
+                <strong class="upi-kpi-val" id="admin-upi-kpi-paused">0</strong>
+                <span class="upi-kpi-sub">Disabled facilities</span>
+              </div>
+            </div>
+
+            <div class="admin-upi-kpi-card">
+              <div class="upi-kpi-icon-box blue">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect><path d="M14 14h3v3h-3z"></path><path d="M17 17h4v4h-4z"></path></svg>
+              </div>
+              <div class="upi-kpi-text-box">
+                <span class="upi-kpi-label">SETTLEMENT MODE</span>
+                <strong class="upi-kpi-val">Direct UPI</strong>
+                <span class="upi-kpi-sub">Zero platform fees</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Main 2-Column Gateway & Live QR Preview -->
+          <div class="admin-upi-config-grid">
+            <!-- Left Card: Facility UPI Gateway Settings -->
+            <div class="admin-upi-form-card">
+              <div class="upi-form-card-header">
+                <h4 class="upi-card-title">Facility UPI Gateway</h4>
+                <p class="upi-card-sub">Select parking facility to edit merchant credentials</p>
+              </div>
+
+              <form id="form-admin-upi-config" onsubmit="event.preventDefault();">
+                <!-- Facility Selector -->
+                <div class="form-group" style="margin-bottom: 14px;">
+                  <label class="form-label" style="font-weight: 700; color: #1E293B;">Select Facility <span style="color:#EF4444;">*</span></label>
+                  <select id="admin-upi-facility-select" class="select-field">
+                    <option value="all">🏢 Global Master (All Parking Facilities)</option>
+                    <!-- Populated dynamically with registered hubs -->
+                  </select>
+                  <span class="form-hint-note">Payment configurations can be customized per facility or inherit master settings.</span>
+                </div>
+
+                <!-- Official UPI ID -->
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label class="form-label" style="font-weight: 700; color: #1E293B;">Merchant / Official UPI ID <span style="color:#EF4444;">*</span></label>
+                  <div class="input-with-icon">
+                    <span class="icon-left font-mono font-bold" style="color: #4F46E5; font-size: 1.1rem;">@</span>
+                    <input type="text" id="admin-upi-id-input" class="input-field" placeholder="9676826516@upi" value="9676826516@upi" required>
+                  </div>
+                </div>
+
+                <!-- Payee Account Holder Name -->
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label class="form-label" style="font-weight: 700; color: #1E293B;">Payee Account Holder Name <span style="color:#EF4444;">*</span></label>
+                  <div class="input-with-icon">
+                    <span class="icon-left" style="color: #4F46E5;">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+                    </span>
+                    <input type="text" id="admin-upi-payee-name" class="input-field" placeholder="Smart Parking Admin" value="Smart Parking Admin" required>
+                  </div>
+                </div>
+
+                <!-- Admin Contact Phone Number -->
+                <div class="form-group" style="margin-bottom: 16px;">
+                  <label class="form-label" style="font-weight: 700; color: #1E293B;">Admin Mobile Phone Number <span style="color:#EF4444;">*</span></label>
+                  <div class="input-with-icon">
+                    <span class="icon-left" style="color: #4F46E5;">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                    </span>
+                    <input type="tel" id="admin-upi-phone-input" class="input-field" placeholder="9676826516" value="9676826516" required>
+                  </div>
+                </div>
+
+                <!-- Enable In-App Fee Payments -->
+                <div class="form-group" style="margin-bottom: 24px;">
+                  <label class="form-label" style="font-weight: 700; color: #1E293B;">Enable In-App Fee Payments</label>
+                  <select id="admin-upi-status-select" class="select-field">
+                    <option value="enabled" selected>Enabled (Users see UPI QR on booking checkout)</option>
+                    <option value="disabled">Disabled (Temporarily pause UPI payments)</option>
+                  </select>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-save-payment-config" id="btn-save-upi-config">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                  <span>Save Payment Configuration</span>
+                </button>
+              </form>
+            </div>
+
+            <!-- Right Card: Live Customer Payment Screen Preview -->
+            <div class="admin-upi-preview-card">
+              <!-- Top Preview Pill -->
+              <div class="admin-upi-preview-pill">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"></circle><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z"></path></svg>
+                <span>Customer Payment Screen Preview</span>
+              </div>
+
+              <!-- Merchant Name -->
+              <h3 class="admin-upi-preview-name" id="admin-preview-payee-name">Smart Parking Admin</h3>
+
+              <!-- UPI ID Row -->
+              <div class="admin-upi-preview-vpa">
+                <span class="preview-vpa-prefix">UPI: </span>
+                <strong class="preview-vpa-val" id="admin-preview-vpa-val">9676826516@upi</strong>
+              </div>
+
+              <!-- Genuine Standard QR Box -->
+              <div class="admin-upi-qr-stage">
+                <div class="admin-upi-qr-inner" id="admin-upi-qr-container">
+                  <!-- Real high-density SVG QR Code rendered dynamically -->
+                </div>
+              </div>
+
+              <!-- Helper Caption -->
+              <p class="admin-upi-preview-caption">
+                📱 Customers will scan this dynamic UPI QR code with GPay, PhonePe, Paytm, or BHIM during booking checkout.
+              </p>
+
+              <!-- Quick Utility Tools -->
+              <div class="admin-upi-preview-quick-tools">
+                <button type="button" class="btn-preview-tool" id="btn-admin-preview-copy-vpa">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                  <span>Copy UPI ID</span>
+                </button>
+                <button type="button" class="btn-preview-tool" id="btn-admin-preview-test-qr">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                  <span>Test Scannability</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= MODAL: EXTEND PARKING DURATION ================= -->
+  <div class="modal-backdrop" id="modal-extend-booking">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title">Extend Parking Duration</h3>
+        <button class="modal-close-x" onclick="document.getElementById('modal-extend-booking').classList.remove('active')">&times;</button>
+      </div>
+      <p class="modal-intro">Add extra hours to keep your reserved slot active without overstay penalties.</p>
+      
+      <div class="form-group">
+        <label class="form-label">Select Additional Hours</label>
+        <select id="web-extend-hours-select" class="select-field">
+          <option value="1">+ 1 Hour (₹20)</option>
+          <option value="2">+ 2 Hours (₹40)</option>
+          <option value="3">+ 3 Hours (₹60)</option>
+        </select>
+      </div>
+
+      <div class="modal-actions-row">
+        <button class="btn-primary-web" id="btn-web-confirm-extend">Pay & Extend</button>
+        <button class="btn-secondary-web" onclick="document.getElementById('modal-extend-booking').classList.remove('active')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: FIREBASE FIRESTORE DATABASE CONFIG ================= -->
+  <div class="modal-backdrop" id="modal-firebase-config">
+    <div class="modal-box">
+      <div class="modal-head">
+        <h3 class="modal-title">🔥 Firebase Firestore Setup</h3>
+        <button class="modal-close-x" onclick="document.getElementById('modal-firebase-config').classList.remove('active')">&times;</button>
+      </div>
+      <p class="modal-intro">
+        Connect your Google Firebase project for real-time cloud data, or enjoy automatic local offline storage.
+      </p>
+
+      <div class="form-group">
+        <label class="form-label">apiKey</label>
+        <input type="text" id="cfg-api-key" class="input-field" placeholder="AIzaSy...">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">projectId</label>
+        <input type="text" id="cfg-project-id" class="input-field" placeholder="your-project-id">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">authDomain</label>
+        <input type="text" id="cfg-auth-domain" class="input-field" placeholder="your-project-id.firebaseapp.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">storageBucket</label>
+        <input type="text" id="cfg-storage-bucket" class="input-field" placeholder="your-project-id.appspot.com">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">appId</label>
+        <input type="text" id="cfg-app-id" class="input-field" placeholder="1:123456:web:abcd...">
+      </div>
+
+      <div class="modal-actions-row" style="margin-top: 20px;">
+        <button class="btn-primary-web" id="btn-save-firebase-cfg">Save & Connect</button>
+        <button class="btn-secondary-web" id="btn-reset-demo-data">Reset Sample DB</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="web-toast" id="web-toast">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+    <span class="web-toast-text">Notification message</span>
+  </div>
+
+  <!-- Leaflet Map JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <!-- Firebase Data Layer & App Logic -->
+  <script src="firebase-config.js?v=5.0"></script>
+  <!-- Standard QR Code Generator (Client-Side Standalone) -->
+  <script src="qrcode.min.js?v=5.0"></script>
+  <script src="app.js?v=5.0"></script>
+</body>
+</html>
